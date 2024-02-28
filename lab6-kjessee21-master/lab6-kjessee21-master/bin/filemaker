@@ -1,0 +1,81 @@
+#!/usr/bin/python3
+# Kaden Jessee
+# Lab 6 - Filemaker
+# CS 3030 - Scripting Languages
+import sys
+import random
+import shlex
+
+def read_comomand_file(input_file):
+    commands = []
+    try:
+        with open(input_file, 'r') as file:
+            for line in file:
+                commands.append(line.strip())
+    except FileNotFoundError:
+        print(f"Error: The input command file '{input_file}' was not found.")
+        sys.exit(1)
+    return commands
+
+def read_word_file(filename):
+    try:
+        with open(filename, 'r') as file:
+            words = file.readlines()
+            return [word.strip() for word in words]
+    except FileNotFoundError:
+        print(f"Error: The word file '{filename}' was not found.")
+        sys.exit(1)
+
+def generate_output(commands, output_file, record_count, words):
+    random_data = {}
+    try:
+        with open(output_file, 'w') as output:
+            for _ in range(recourd_count):
+                for command in commands:
+                    parts = shlex.split(command)
+                    cmd = parts[0]
+                    if cmd == 'HEADER':
+                        output.write(parts[1] + '\n')
+                    elif cmd == 'STRING':
+                        output.write(parts[1] + '\n')
+                    elif cmd == 'WORD':
+                        label, filename = parts[1], parts[2]
+                        random_word = random.choice(words[filename])
+                        random_data[label] = random_word
+                        output.write(random_word + '\n')
+                    elif cmd == 'INTEGER':
+                        label, min_value, max_value = parts[1], int(parts[2]), int(parts[3])
+                        random_integer = random.randint(min_value, max_value)
+                        random_data[label] = random_integer
+                        output.write(str(random_integer) + '\n')
+                    elif cmd == 'REFER':
+                        label = parts[1]
+                        output.write(str(random_data[label]) + '\n')
+    except IOError:
+        print(f"Error: There was an issue writing to the output file '{output_file}'.")
+        sys.exit(1)
+
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 4:
+        print("Usage: ./filemaker INPUTCOMMANDFILE OUTPUTFILE RECORDCOUNT")
+        sys.exit(1)
+
+        input_file, output_file, record_count_str = sys.argv[1], sys.argv[2], sys.argv[3]
+
+        try:
+            record_count = int(record_count_str)
+            if record_count <= 0:
+                raise ValueError()
+        except ValueError:
+            print("Error: RECORDCOUNT must be a positive integer.")
+            sys.exit(1)
+
+        commands = read_command_file(input_file)
+        word_files = {"firstnames.txt": read_word_file("firstnames.txt"), "surnames.txt": read_word_file("surnames.txt")}
+        generate_output(commands, output_file, record_count, word_file)
+
+
+
+sys.exit(0)

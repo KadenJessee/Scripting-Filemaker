@@ -1,0 +1,83 @@
+#!/usr/bin/python3
+# Kaden Jessee
+# Lab 6 - Filemaker
+# CS 3030 - Scripting Languages
+import sys
+import random
+import shlex
+
+def read_file(filename):
+    try:
+        with open(filename, 'r') as file:
+            return file.readlines()
+    except FileNotFoundError:
+        print(f"Error: File '{filename}' not found.")
+        sys.exit(1)
+
+def parse_commands(input_command_file):
+    commands = []
+    lines = read_file(input_command_file)
+    for line in lines:
+        command = shlex.split(line)
+        commands.append(command)
+    return commands
+
+def generate_data(command, random_data, random_files):
+    cmd_type = command[0]
+    if cmd_type == 'HEADER':
+        # Write the header string to the output file only if it's the first time
+        if not hasattr(generate_data, 'header_written'):
+            generate_data.header_written = True
+            return command[1]
+        return ''
+    elif cmd_type == 'STRING':
+        return command[1]
+    elif cmd_type == 'WORD':
+        label = command[1]
+        filename = command[2]
+        words = random_files.get(filename)
+        if words:
+            random_word = random.choice(words).strip()
+            # Store the random word for REFER command
+            random_data[label] = random_word
+            return random_word
+    elif cmd_type == 'INTEGER':
+        label = command[1]
+        min_val = int(command[2])
+        max_val = int(command[3])
+        random_integer = random.randint(min_val, max_val)
+        # Store the random integer for REFER command
+        random_data[label] = str(random_integer)
+        return str(random_integer)
+    elif cmd_type == 'REFER':
+        label = command[1]
+        referenced_data = random_data.get(label, '')  # Get the referenced data
+        return referenced_data  # Return the referenced data
+    return ''
+
+if __name__ == "__main__":
+    if len(sys.argv) != 4:
+        print("Usage: ./filemaker INPUTCOMMANDFILE OUTPUTFILE RECORDCOUNT")
+        sys.exit(1)
+
+    input_command_file = sys.argv[1]
+    output_file = sys.argv[2]
+    record_count = int(sys.argv[3])
+
+    commands = parse_commands(input_command_file)
+
+    random_files = {}
+    for command in commands:
+        if command[0] == 'WORD':
+            filename = command[2]
+            random_files[filename] = read_file(filename)
+
+    with open(output_file, 'w') as outfile:
+        for _ in range(record_count):
+            random_data = {}
+            for command in commands:
+                output = generate_data(command, random_data, random_files)
+                output = output.encode("utf-8").decode("unicode_escape")
+                if output:
+                    outfile.write(output)
+    sys.exit(0)
